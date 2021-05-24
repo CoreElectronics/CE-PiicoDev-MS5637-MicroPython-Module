@@ -65,7 +65,7 @@ class PiicoDev_MS5637(object):
         self.i2c = i2c
         self.addr = addr
         try:
-            self.i2c.write8(self.addr, None, bytearray([self._SOFTRESET]))
+            self.i2c.write8(self.addr, None, bytes([self._SOFTRESET]))
             time.sleep(0.015)
         except Exception:
             print('Device 0x{:02X} not found'.format(self.addr))
@@ -132,7 +132,7 @@ class PiicoDev_MS5637(object):
     # -> Adc value
     def convertion_read_adc(self,cmd,_time) :
         try:
-            self.i2c.write8(self.addr, None, chr(cmd))
+            self.i2c.write8(self.addr, None, bytes([cmd]))
             time.sleep(_time)
             data = self.i2c.readfrom_mem(self.addr, self._ADC_READ, 3)
             adc = int.from_bytes(data, 'big')
