@@ -4,7 +4,6 @@
 
 from PiicoDev_Unified import *
 i2c = PiicoDev_Unified_I2C()
-import time
 
 class PiicoDev_MS5637(object):
     # MS5637 device address
@@ -27,18 +26,12 @@ class PiicoDev_MS5637(object):
     _MS5637_PROM_ADDRESS_READ_ADDRESS_6 = 0xAC
 
     # MS5637 commands conversion time
-    _MS5637_CONVERSION_TIME_OSR_256 = 0.001
-    _MS5637_CONVERSION_TIME_OSR_512 = 0.002
-    _MS5637_CONVERSION_TIME_OSR_1024 = 0.003
-    _MS5637_CONVERSION_TIME_OSR_2048 = 0.005
-    _MS5637_CONVERSION_TIME_OSR_4096 = 0.009
-    _MS5637_CONVERSION_TIME_OSR_8192 = 0.017
-    #_MS5637_CONVERSION_TIME_OSR_256 = 0.1
-    #_MS5637_CONVERSION_TIME_OSR_512 = 0.1
-    #_MS5637_CONVERSION_TIME_OSR_1024 = 0.1
-    #_MS5637_CONVERSION_TIME_OSR_2048 = 0.1
-    #_MS5637_CONVERSION_TIME_OSR_4096 = 0.1
-    #_MS5637_CONVERSION_TIME_OSR_8192 = 0.1
+    _MS5637_CONVERSION_TIME_OSR_256 = 1 # 0.001
+    _MS5637_CONVERSION_TIME_OSR_512 = 2 # 0.002
+    _MS5637_CONVERSION_TIME_OSR_1024 = 3 # 0.003
+    _MS5637_CONVERSION_TIME_OSR_2048 = 5 # 0.005
+    _MS5637_CONVERSION_TIME_OSR_4096 = 9 # 0.009
+    _MS5637_CONVERSION_TIME_OSR_8192 = 17 # 0.017
     
     # MS5637 commands resolution 
     _RESOLUTION_OSR_256 = 0
@@ -66,18 +59,14 @@ class PiicoDev_MS5637(object):
         self.addr = addr
         try:
             self.i2c.write8(self.addr, None, bytes([self._SOFTRESET]))
-            time.sleep(0.015)
+            sleep_ms(15)
         except Exception:
             print('Device 0x{:02X} not found'.format(self.addr))
 
-    # brief Set  ADC resolution.
-    # \param[in] ms5637_resolution_osr : Resolution requested
-    # return :
-    # -> temperature command
-    # -> pressure command
-    # -> temperature conversion time 
-    # -> pressure conversion time 
-    def set_resoltuion(self,res) :
+    # Set  ADC resolution.
+    # res : ms5637_resolution_osr : Resolution requested
+    # return temperature command, pressure command, temperature conversion time, pressure conversion time 
+    def set_resolution(self,res) :
         time = [self._MS5637_CONVERSION_TIME_OSR_256,
         self._MS5637_CONVERSION_TIME_OSR_512,
         self._MS5637_CONVERSION_TIME_OSR_1024,
@@ -93,23 +82,17 @@ class PiicoDev_MS5637(object):
         _time_pressure = time[int((cmd_pressure & self._MS5637_CONVERSION_OSR_MASK)/2)]
         return cmd_temp,cmd_pressure, _time_temp, _time_pressure
 
-    # brief read eeprom coeff.
-    # \param[in] address of coefficient in EEPROM
-    # return :
-    # -> Data read 
+    # Read eeprom coefficients
+    # cmd : address of coefficient in EEPROM
     def read_eeprom_coeff (self, cmd) :
         data = self.i2c.readfrom_mem(self.addr, cmd, 2)
         return int.from_bytes(data, 'big')
 
-    #\brief Reads the ms5637 EEPROM coefficients to store them for computation.
-    # return :
-    # -> All coefficients read in the EEPROM 
+    # Reads the ms5637 EEPROM coefficients to store them for computation.
+    # Returns all coefficients read in the EEPROM 
     def read_eeprom(self) : 
         a = 0
-
         coeffs = [0,0,0,0,0,0,0,0]
-        crc_OK = False
-
         liste = [self._MS5637_PROM_ADDRESS_READ_ADDRESS_0,
         self._MS5637_PROM_ADDRESS_READ_ADDRESS_1,
         self._MS5637_PROM_ADDRESS_READ_ADDRESS_2,
@@ -121,19 +104,17 @@ class PiicoDev_MS5637(object):
         for i in liste :
             coeffs[a] = self.read_eeprom_coeff(i)
             a = a+1
-            crc_OK = self.crc_check(coeffs)
-        if crc_OK != True :
-            self.coeff_valid = True
-            return coeffs
+        self.coeff_valid = True
+        return coeffs
 
-    # brief Triggers conversion and read ADC value
-    # \param[in] : Command used for conversion (will determine Temperature vs Pressure and osr)
-    # return :
-    # -> Adc value
-    def convertion_read_adc(self,cmd,_time) :
+    # Triggers conversion and read ADC value
+    # Cmd : Command used for conversion (will determine Temperature vs Pressure and osr)
+    # _time : ms
+    # adc : ADC value
+    def conversion_read_adc(self,cmd,_time) :
         try:
             self.i2c.write8(self.addr, None, bytes([cmd]))
-            time.sleep(_time)
+            sleep_ms(_time)
             data = self.i2c.readfrom_mem(self.addr, self._ADC_READ, 3)
             adc = int.from_bytes(data, 'big')
         except Exception:
@@ -141,15 +122,15 @@ class PiicoDev_MS5637(object):
         return adc
   
     # Read Temperature and Pressure, perform compensation
-    # res: resolution [ units ]
+    # res: resolution [ # ]
     # returns Temperature [degC] and Pressure [hPa]
     def read_temperature_and_pressure(self,res=_RESOLUTION_OSR_8192) :
         if self.coeff_valid == False :
             self.eeprom_coeff = self.read_eeprom()
-        (cmd_temp, cmd_pressure,_time_temp,_time_pressure) = self.set_resoltuion(res)
+        (cmd_temp, cmd_pressure,_time_temp,_time_pressure) = self.set_resolution(res)
 
-        adc_temperature = self.convertion_read_adc(cmd_temp,_time_temp)
-        adc_pressure = self.convertion_read_adc(cmd_pressure,_time_pressure)
+        adc_temperature = self.conversion_read_adc(cmd_temp,_time_temp)
+        adc_pressure = self.conversion_read_adc(cmd_pressure,_time_pressure)
         if ((adc_temperature is None) or (adc_pressure is None) or (type(adc_temperature) is not int) or (type(adc_pressure) is not int)):
             return None, None
          # Difference between actual and reference temperature = D2 - Tref
@@ -186,46 +167,11 @@ class PiicoDev_MS5637(object):
 
         return temperature, pressure
     
-    # brief Reads only the pressure
-    # \param[in] : Resolution command
-    # return :
-    # -> pressure (float) : mbar pressure value
+    # res: resolution [ # ]
+    # Returns the pressure [hPa]
     def read_pressure(self,res=_RESOLUTION_OSR_8192) :
         temperature_and_pressure = self.read_temperature_and_pressure(res)
         return temperature_and_pressure[1]
-    
-    # brief CRC check
-    # \param[in] : EEPROM Coefficients
-    # return :
-    # -> (bool) True if the CRC is OK, else False
-    def crc_check (self,n_prom) : 
-        cnt = 0
-        n_bit = 8
-        n_rem = 0
-        n_prom[0]=((n_prom[0]) & 0x0FFF); # CRC byte is replaced by 0
-        while (cnt < 16) :
-            # operation is performed on bytes
-            # choose LSB or MSB
-            if (cnt%2==1) :
-                n_rem ^= ((n_prom[int(cnt/2)]) & 0x00FF) 
-            else :
-                n_rem ^= (n_prom[int(cnt/2)]>>8)
-
-            while n_bit > 0 :
-                n_bit -= 1
-                if (n_rem & 0x8000) :
-                    n_rem = (n_rem << 1) ^ 0x3000
-
-                else :
-                    n_rem = (n_rem << 1)
-
-            cnt += 1
-            n_bit = 8
-        cnt = 0
-        n_rem = ((n_rem >> 12) & 0x000F) #final 4-bit reminder is CRC code
-        n_rem ^= 0x00
-        return (n_rem == n_prom[0])
-
 
     def close(self):
         self.i2c.close()
