@@ -65,7 +65,7 @@ class PiicoDev_MS5637(object):
         self.i2c = i2c
         self.addr = addr
         try:
-            self.i2c.UnifiedWrite(self.addr, bytearray([self._SOFTRESET]))
+            self.i2c.write8(self.addr, None, bytearray([self._SOFTRESET]))
             time.sleep(0.015)
         except Exception:
             print('Device 0x{:02X} not found'.format(self.addr))
@@ -98,8 +98,7 @@ class PiicoDev_MS5637(object):
     # return :
     # -> Data read 
     def read_eeprom_coeff (self, cmd) :
-        self.i2c.UnifiedWrite(self.addr, bytes([cmd]))
-        data = self.i2c.UnifiedRead(self.addr, 2)
+        data = self.i2c.readfrom_mem(self.addr, cmd, 2)
         return int.from_bytes(data, 'big')
 
     #\brief Reads the ms5637 EEPROM coefficients to store them for computation.
@@ -133,20 +132,17 @@ class PiicoDev_MS5637(object):
     # -> Adc value
     def convertion_read_adc(self,cmd,_time) :
         try:
-            self.i2c.UnifiedWrite(self.addr, chr(cmd))
+            self.i2c.write8(self.addr, None, chr(cmd))
             time.sleep(_time)
-            self.i2c.UnifiedWrite(self.addr, chr(self._ADC_READ))
-            data = self.i2c.UnifiedRead(self.addr, 3)
+            data = self.i2c.readfrom_mem(self.addr, self._ADC_READ, 3)
             adc = int.from_bytes(data, 'big')
         except Exception:
             adc = None
         return adc
-
-    # brief Reads the temperature and pressure ADC value and compute the compensated values.
-    # \param[in] : Resolution command
-    # return :
-    # -> temperature (float) : Celsius Degree temperature value
-    # -> pressure (float) : mbar pressure value
+  
+    # Read Temperature and Pressure, perform compensation
+    # res: resolution [ units ]
+    # returns Temperature [degC] and Pressure [hPa]
     def read_temperature_and_pressure(self,res=_RESOLUTION_OSR_8192) :
         if self.coeff_valid == False :
             self.eeprom_coeff = self.read_eeprom()
@@ -189,7 +185,15 @@ class PiicoDev_MS5637(object):
         pressure = P / 100.0
 
         return temperature, pressure
-
+    
+    # brief Reads only the pressure
+    # \param[in] : Resolution command
+    # return :
+    # -> pressure (float) : mbar pressure value
+    def read_pressure(self,res=_RESOLUTION_OSR_8192) :
+        temperature_and_pressure = self.read_temperature_and_pressure(res)
+        return temperature_and_pressure[1]
+    
     # brief CRC check
     # \param[in] : EEPROM Coefficients
     # return :
