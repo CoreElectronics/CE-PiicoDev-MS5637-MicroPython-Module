@@ -7,8 +7,9 @@ This module depends on the [PiicoDev Unified Library](https://github.com/CoreEle
 See the [Quickstart Guide](https://piico.dev/p11)
 
 This module has been tested on:
- - Micro:bit v1, (expected to work with Micro:bit v2 without changes)
+ - Micro:bit v2
  - Raspberry Pi Pico
+ - Raspberry Pi SBC
 
 
 # License
