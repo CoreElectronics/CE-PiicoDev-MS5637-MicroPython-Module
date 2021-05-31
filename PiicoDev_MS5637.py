@@ -128,7 +128,6 @@ class PiicoDev_MS5637(object):
         if self.coeff_valid == False :
             self.eeprom_coeff = self.read_eeprom()
         (cmd_temp, cmd_pressure,_time_temp,_time_pressure) = self.set_resolution(res)
-
         adc_temperature = self.conversion_read_adc(cmd_temp,_time_temp)
         adc_pressure = self.conversion_read_adc(cmd_pressure,_time_pressure)
         if ((adc_temperature is None) or (adc_pressure is None) or (type(adc_temperature) is not int) or (type(adc_pressure) is not int)):
@@ -157,10 +156,8 @@ class PiicoDev_MS5637(object):
         # Sensitivity at actual temperature = SENS_T1 + TCS * dT
         SENS = ( self.eeprom_coeff[self._MS5637_PRESSURE_SENSITIVITY_INDEX] * 0x10000 ) + ( (self.eeprom_coeff[self._MS5637_TEMP_COEFF_OF_PRESSURE_SENSITIVITY_INDEX] * dT) >> 7 ) 
         SENS -= SENS2
-        if (type(SENS) is not int) or (type(OFF) is not int):
-            return None, None
         #  Temperature compensated pressure = D1 * SENS - OFF
-        P = ( ( (adc_pressure * SENS) >> 21 ) - OFF ) >> 15 
+        P = ( ( (int(adc_pressure * SENS)) >> 21 ) - int(OFF) ) >> 15 
 
         temperature = ( TEMP - T2 ) / 100.0
         pressure = P / 100.0
@@ -172,6 +169,11 @@ class PiicoDev_MS5637(object):
     def read_pressure(self,res=_RESOLUTION_OSR_8192) :
         temperature_and_pressure = self.read_temperature_and_pressure(res)
         return temperature_and_pressure[1]
+    
+    # Returns the altitude [m]
+    def read_altitude(self,pressure_sea_level=1013.25):
+        pressure = self.read_pressure()
+        return 44330*(1-(float(pressure)/pressure_sea_level)**(1/5.255))
 
     def close(self):
         self.i2c.close()
