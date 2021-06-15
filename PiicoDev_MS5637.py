@@ -17,21 +17,21 @@ class PiicoDev_MS5637(object):
     _ADC_READ = 0x00
 
     # MS5637 commands read eeprom
-    _MS5637_PROM_ADDRESS_READ_ADDRESS_0 = 0xA0
-    _MS5637_PROM_ADDRESS_READ_ADDRESS_1 = 0xA2
-    _MS5637_PROM_ADDRESS_READ_ADDRESS_2 = 0xA4
-    _MS5637_PROM_ADDRESS_READ_ADDRESS_3 = 0xA6
-    _MS5637_PROM_ADDRESS_READ_ADDRESS_4 = 0xA8
-    _MS5637_PROM_ADDRESS_READ_ADDRESS_5 = 0xAA
-    _MS5637_PROM_ADDRESS_READ_ADDRESS_6 = 0xAC
+    _MS5637_PROM_ADDR_0 = 0xA0
+    _MS5637_PROM_ADDR_1 = 0xA2
+    _MS5637_PROM_ADDR_2 = 0xA4
+    _MS5637_PROM_ADDR_3 = 0xA6
+    _MS5637_PROM_ADDR_4 = 0xA8
+    _MS5637_PROM_ADDR_5 = 0xAA
+    _MS5637_PROM_ADDR_6 = 0xAC
 
     # MS5637 commands conversion time
-    _MS5637_CONVERSION_TIME_OSR_256 = 1 # 0.001
-    _MS5637_CONVERSION_TIME_OSR_512 = 2 # 0.002
-    _MS5637_CONVERSION_TIME_OSR_1024 = 3 # 0.003
-    _MS5637_CONVERSION_TIME_OSR_2048 = 5 # 0.005
-    _MS5637_CONVERSION_TIME_OSR_4096 = 9 # 0.009
-    _MS5637_CONVERSION_TIME_OSR_8192 = 17 # 0.017
+    _MS5637_CONV_TIME_OSR_256 = 1 # 0.001
+    _MS5637_CONV_TIME_OSR_512 = 2 # 0.002
+    _MS5637_CONV_TIME_OSR_1024 = 3 # 0.003
+    _MS5637_CONV_TIME_OSR_2048 = 5 # 0.005
+    _MS5637_CONV_TIME_OSR_4096 = 9 # 0.009
+    _MS5637_CONV_TIME_OSR_8192 = 17 # 0.017
     
     # MS5637 commands resolution 
     _RESOLUTION_OSR_256 = 0
@@ -67,12 +67,12 @@ class PiicoDev_MS5637(object):
     # res : ms5637_resolution_osr : Resolution requested
     # return temperature command, pressure command, temperature conversion time, pressure conversion time 
     def set_resolution(self,res) :
-        time = [self._MS5637_CONVERSION_TIME_OSR_256,
-        self._MS5637_CONVERSION_TIME_OSR_512,
-        self._MS5637_CONVERSION_TIME_OSR_1024,
-        self._MS5637_CONVERSION_TIME_OSR_2048,
-        self._MS5637_CONVERSION_TIME_OSR_4096,
-        self._MS5637_CONVERSION_TIME_OSR_8192]
+        time = [self._MS5637_CONV_TIME_OSR_256,
+        self._MS5637_CONV_TIME_OSR_512,
+        self._MS5637_CONV_TIME_OSR_1024,
+        self._MS5637_CONV_TIME_OSR_2048,
+        self._MS5637_CONV_TIME_OSR_4096,
+        self._MS5637_CONV_TIME_OSR_8192]
         cmd_temp = res *2;
         cmd_temp |= self._MS5637_START_TEMPERATURE_ADC_CONVERSION;
         _time_temp = time[int((cmd_temp & self._MS5637_CONVERSION_OSR_MASK)/2)]
@@ -93,13 +93,13 @@ class PiicoDev_MS5637(object):
     def read_eeprom(self) : 
         a = 0
         coeffs = [0,0,0,0,0,0,0,0]
-        liste = [self._MS5637_PROM_ADDRESS_READ_ADDRESS_0,
-        self._MS5637_PROM_ADDRESS_READ_ADDRESS_1,
-        self._MS5637_PROM_ADDRESS_READ_ADDRESS_2,
-        self._MS5637_PROM_ADDRESS_READ_ADDRESS_3,
-        self._MS5637_PROM_ADDRESS_READ_ADDRESS_4,
-        self._MS5637_PROM_ADDRESS_READ_ADDRESS_5,
-        self._MS5637_PROM_ADDRESS_READ_ADDRESS_6,]
+        liste = [self._MS5637_PROM_ADDR_0,
+        self._MS5637_PROM_ADDR_1,
+        self._MS5637_PROM_ADDR_2,
+        self._MS5637_PROM_ADDR_3,
+        self._MS5637_PROM_ADDR_4,
+        self._MS5637_PROM_ADDR_5,
+        self._MS5637_PROM_ADDR_6,]
     
         for i in liste :
             coeffs[a] = self.read_eeprom_coeff(i)
