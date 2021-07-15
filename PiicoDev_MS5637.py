@@ -3,7 +3,6 @@
 # Original repo https://github.com/TEConnectivity/piweathershield-python/tree/67fa820647fafa5a1a7a5a4828ee13d80a60a279
 
 from PiicoDev_Unified import *
-i2c = PiicoDev_Unified_I2C()
 
 class PiicoDev_MS5637(object):
     # MS5637 device address
@@ -54,14 +53,14 @@ class PiicoDev_MS5637(object):
     
     coeff_valid = False
 
-    def __init__(self, addr = _I2C_ADDRESS, i2c = i2c):
-        self.i2c = i2c
+    def __init__(self, bus=None, freq=None, sda=None, scl=None, addr = _I2C_ADDRESS):
+        self.i2c = create_unified_i2c(bus=bus, freq=freq, sda=sda, scl=scl)
         self.addr = addr
-        try:
-            self.i2c.write8(self.addr, None, bytes([self._SOFTRESET]))
-            sleep_ms(15)
-        except Exception:
-            print('Device 0x{:02X} not found'.format(self.addr))
+        #try:
+        self.i2c.write8(self.addr, None, bytes([self._SOFTRESET]))
+        sleep_ms(15)
+        #except Exception:
+        #    print('Device 0x{:02X} not found'.format(self.addr))
 
     # Set  ADC resolution.
     # res : ms5637_resolution_osr : Resolution requested
