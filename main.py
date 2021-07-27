@@ -3,17 +3,18 @@
 # and displays the result
 
 from PiicoDev_MS5637 import PiicoDev_MS5637
-
-from utime import sleep_ms
+from PiicoDev_Unified import sleep_ms
 
 pressure = PiicoDev_MS5637()
 
 while True:
-    barometric_pressure = pressure.read_temperature_and_pressure(pressure._RESOLUTION_OSR_8192)
-    if (barometric_pressure[1] is not None):
-        print("{:2.2f} {:4.2f}".format(barometric_pressure[0],barometric_pressure[1]))
+    press_hPa = pressure.read_pressure()
+    altitude_m = pressure.read_altitude()
+    
+    # Print Pressure
+    print(str(press_hPa) + " hPa")
+    
+    # Print Altitude (metres)
+#     print(str(altitude_m) + " m")
     sleep_ms(100)
     
-    
-
-       
