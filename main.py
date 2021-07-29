@@ -10,8 +10,7 @@ pressure = PiicoDev_MS5637()
 
 while True:
     barometric_pressure = pressure.read_temperature_and_pressure(pressure._RESOLUTION_OSR_8192)
-    if (barometric_pressure[1] is not None):
-        print("{:2.2f} {:4.2f}".format(barometric_pressure[0],barometric_pressure[1]))
+    print("{:2.2f} {:4.2f}".format(barometric_pressure[0],barometric_pressure[1]))
     sleep_ms(100)
     
     

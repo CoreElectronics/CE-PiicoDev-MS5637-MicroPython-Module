@@ -4,6 +4,8 @@
 
 from PiicoDev_Unified import *
 
+compat_str = '\nUnified PiicoDev library out of date.  Get the latest module: https://piico.dev/unified \n'
+
 class PiicoDev_MS5637(object):
     # MS5637 device address
     _I2C_ADDRESS = 0x76
@@ -54,6 +56,13 @@ class PiicoDev_MS5637(object):
     coeff_valid = False
 
     def __init__(self, bus=None, freq=None, sda=None, scl=None, addr = _I2C_ADDRESS):
+        try:
+            if compat_ind >= 1:
+                pass
+            else:
+                print(compat_str)
+        except:
+            print(compat_str)
         self.i2c = create_unified_i2c(bus=bus, freq=freq, sda=sda, scl=scl)
         self.addr = addr
         #try:
@@ -111,13 +120,10 @@ class PiicoDev_MS5637(object):
     # _time : ms
     # adc : ADC value
     def conversion_read_adc(self,cmd,_time) :
-        try:
-            self.i2c.write8(self.addr, None, bytes([cmd]))
-            sleep_ms(_time)
-            data = self.i2c.readfrom_mem(self.addr, self._ADC_READ, 3)
-            adc = int.from_bytes(data, 'big')
-        except Exception:
-            adc = None
+        self.i2c.write8(self.addr, None, bytes([cmd]))
+        sleep_ms(_time)
+        data = self.i2c.readfrom_mem(self.addr, self._ADC_READ, 3)
+        adc = int.from_bytes(data, 'big')
         return adc
   
     # Read Temperature and Pressure, perform compensation
@@ -127,10 +133,14 @@ class PiicoDev_MS5637(object):
         if self.coeff_valid == False :
             self.eeprom_coeff = self.read_eeprom()
         (cmd_temp, cmd_pressure,_time_temp,_time_pressure) = self.set_resolution(res)
-        adc_temperature = self.conversion_read_adc(cmd_temp,_time_temp)
-        adc_pressure = self.conversion_read_adc(cmd_pressure,_time_pressure)
-        if ((adc_temperature is None) or (adc_pressure is None) or (type(adc_temperature) is not int) or (type(adc_pressure) is not int)):
-            return None, None
+        try:
+            adc_temperature = self.conversion_read_adc(cmd_temp,_time_temp)
+            adc_pressure = self.conversion_read_adc(cmd_pressure,_time_pressure)
+        except:
+            print(i2c_err_str.format(self.addr))
+            return float('NaN'), float('NaN')
+        if ((type(adc_temperature) is not int) or (type(adc_pressure) is not int)):
+            return float('NaN'), float('NaN')
          # Difference between actual and reference temperature = D2 - Tref
         dT = (adc_temperature) - (self.eeprom_coeff[self._MS5637_REFERENCE_TEMPERATURE_INDEX] * 0x100)
          # Actual temperature = 2000 + dT * TEMPSENS
