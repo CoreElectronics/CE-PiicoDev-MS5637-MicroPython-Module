@@ -10,7 +10,7 @@ pressure = PiicoDev_MS5637()
 while True:
     press_hPa = pressure.read_pressure()
     altitude_m = pressure.read_altitude()
-    
+
     # Print Pressure
     print(str(press_hPa) + " hPa")
     
