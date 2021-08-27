@@ -53,7 +53,7 @@ returned | float | | | Pressure reading|hPa
 ### PiicoDev_MS5637.read_altitude(pressure_sea_level=1013.25)
 Parameter | Type | Range | Default | Description | Unit
 --- | --- | --- | --- | --- | ---
-pressure_sea_level | float | any | 113.25 | Enter the current sea level pressure.  This value is available from your favourite weather service. | hPa
+pressure_sea_level | float | any | 1013.25 | Enter the current sea level pressure.  This value is available from your favourite weather service. | hPa
 returned | float | | | Altitude | m
 
 # License
